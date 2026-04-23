@@ -9,6 +9,7 @@
 export * from "./assigneeWorkload";
 export * from "./createTaskBody";
 export * from "./getUpcomingTasksParams";
+export * from "./getVelocityParams";
 export * from "./healthStatus";
 export * from "./listTasksParams";
 export * from "./member";
@@ -19,3 +20,5 @@ export * from "./task";
 export * from "./taskPriority";
 export * from "./taskStatus";
 export * from "./updateTaskBody";
+export * from "./velocityReport";
+export * from "./weekVelocityPoint";

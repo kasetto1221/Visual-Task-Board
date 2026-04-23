@@ -92,6 +92,24 @@ export interface StatsSummary {
   byPriority: PriorityCount[];
 }
 
+export interface WeekVelocityPoint {
+  weekStart: string;
+  label: string;
+  completed: number;
+  created: number;
+}
+
+export interface VelocityReport {
+  weeks: WeekVelocityPoint[];
+  averageCompletedPerWeek: number;
+  totalCompleted: number;
+  totalCreated: number;
+  /** Completed divided by created over the period (0-1) */
+  completionRate: number;
+  /** Average days between createdAt and completion (status=done) */
+  averageCycleTimeDays: number;
+}
+
 export interface AssigneeWorkload {
   member: Member;
   total: number;
@@ -113,4 +131,12 @@ export type GetUpcomingTasksParams = {
    * @maximum 50
    */
   limit?: number;
+};
+
+export type GetVelocityParams = {
+  /**
+   * @minimum 1
+   * @maximum 26
+   */
+  weeks?: number;
 };

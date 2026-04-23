@@ -171,6 +171,26 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Task"
+  /stats/velocity:
+    get:
+      operationId: getVelocity
+      tags: [stats]
+      summary: Weekly completion velocity
+      parameters:
+        - in: query
+          name: weeks
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 26
+            default: 8
+      responses:
+        "200":
+          description: Velocity series and summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VelocityReport"
   /stats/workload:
     get:
       operationId: getWorkload
@@ -337,6 +357,45 @@ components:
           items:
             $ref: "#/components/schemas/PriorityCount"
       required: [total, overdue, dueToday, dueThisWeek, completedThisWeek, byStatus, byPriority]
+    WeekVelocityPoint:
+      type: object
+      properties:
+        weekStart:
+          type: string
+          format: date
+        label:
+          type: string
+        completed:
+          type: integer
+        created:
+          type: integer
+      required: [weekStart, label, completed, created]
+    VelocityReport:
+      type: object
+      properties:
+        weeks:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeekVelocityPoint"
+        averageCompletedPerWeek:
+          type: number
+        totalCompleted:
+          type: integer
+        totalCreated:
+          type: integer
+        completionRate:
+          type: number
+          description: Completed divided by created over the period (0-1)
+        averageCycleTimeDays:
+          type: number
+          description: Average days between createdAt and completion (status=done)
+      required:
+        - weeks
+        - averageCompletedPerWeek
+        - totalCompleted
+        - totalCreated
+        - completionRate
+        - averageCycleTimeDays
     AssigneeWorkload:
       type: object
       properties:

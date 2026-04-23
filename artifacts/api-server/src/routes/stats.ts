@@ -107,6 +107,102 @@ router.get("/stats/upcoming", async (req, res, next) => {
   }
 });
 
+router.get("/stats/velocity", async (req, res, next) => {
+  try {
+    const weeksRaw = Number(req.query.weeks ?? 8);
+    const weeks = Number.isFinite(weeksRaw)
+      ? Math.min(Math.max(1, Math.trunc(weeksRaw)), 26)
+      : 8;
+    const tasks = await db.select().from(tasksTable);
+
+    const now = new Date();
+    const startOfThisWeek = new Date(now);
+    const day = startOfThisWeek.getDay();
+    const diffToMonday = (day + 6) % 7;
+    startOfThisWeek.setDate(startOfThisWeek.getDate() - diffToMonday);
+    startOfThisWeek.setHours(0, 0, 0, 0);
+
+    const buckets: {
+      weekStart: string;
+      label: string;
+      completed: number;
+      created: number;
+      start: Date;
+      end: Date;
+    }[] = [];
+    for (let i = weeks - 1; i >= 0; i--) {
+      const start = new Date(startOfThisWeek);
+      start.setDate(start.getDate() - i * 7);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 7);
+      const month = start.getMonth() + 1;
+      const date = start.getDate();
+      buckets.push({
+        weekStart: fmt(start),
+        label: `${month}/${date}`,
+        completed: 0,
+        created: 0,
+        start,
+        end,
+      });
+    }
+
+    let totalCycleDays = 0;
+    let cycleCount = 0;
+
+    for (const t of tasks) {
+      const created = t.createdAt;
+      for (const b of buckets) {
+        if (created >= b.start && created < b.end) {
+          b.created += 1;
+          break;
+        }
+      }
+      if (t.status === "done") {
+        const completedAt = t.updatedAt;
+        for (const b of buckets) {
+          if (completedAt >= b.start && completedAt < b.end) {
+            b.completed += 1;
+            break;
+          }
+        }
+        const ms = completedAt.getTime() - created.getTime();
+        if (ms >= 0) {
+          totalCycleDays += ms / (1000 * 60 * 60 * 24);
+          cycleCount += 1;
+        }
+      }
+    }
+
+    const totalCompleted = buckets.reduce((s, b) => s + b.completed, 0);
+    const totalCreated = buckets.reduce((s, b) => s + b.created, 0);
+    const averageCompletedPerWeek =
+      buckets.length > 0
+        ? Math.round((totalCompleted / buckets.length) * 10) / 10
+        : 0;
+    const completionRate =
+      totalCreated > 0 ? Math.round((totalCompleted / totalCreated) * 100) / 100 : 0;
+    const averageCycleTimeDays =
+      cycleCount > 0 ? Math.round((totalCycleDays / cycleCount) * 10) / 10 : 0;
+
+    res.json({
+      weeks: buckets.map(({ weekStart, label, completed, created }) => ({
+        weekStart,
+        label,
+        completed,
+        created,
+      })),
+      averageCompletedPerWeek,
+      totalCompleted,
+      totalCreated,
+      completionRate,
+      averageCycleTimeDays,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/stats/workload", async (_req, res, next) => {
   try {
     const tasks = await db.select().from(tasksTable);

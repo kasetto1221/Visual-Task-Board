@@ -215,6 +215,40 @@ export const GetUpcomingTasksResponseItem = zod.object({
 export const GetUpcomingTasksResponse = zod.array(GetUpcomingTasksResponseItem);
 
 /**
+ * @summary Weekly completion velocity
+ */
+export const getVelocityQueryWeeksDefault = 8;
+export const getVelocityQueryWeeksMax = 26;
+
+export const GetVelocityQueryParams = zod.object({
+  weeks: zod.coerce
+    .number()
+    .min(1)
+    .max(getVelocityQueryWeeksMax)
+    .default(getVelocityQueryWeeksDefault),
+});
+
+export const GetVelocityResponse = zod.object({
+  weeks: zod.array(
+    zod.object({
+      weekStart: zod.coerce.date(),
+      label: zod.string(),
+      completed: zod.number(),
+      created: zod.number(),
+    }),
+  ),
+  averageCompletedPerWeek: zod.number(),
+  totalCompleted: zod.number(),
+  totalCreated: zod.number(),
+  completionRate: zod
+    .number()
+    .describe("Completed divided by created over the period (0-1)"),
+  averageCycleTimeDays: zod
+    .number()
+    .describe("Average days between createdAt and completion (status=done)"),
+});
+
+/**
  * @summary Per-assignee workload counts
  */
 export const GetWorkloadResponseItem = zod.object({

@@ -20,12 +20,14 @@ import type {
   AssigneeWorkload,
   CreateTaskBody,
   GetUpcomingTasksParams,
+  GetVelocityParams,
   HealthStatus,
   ListTasksParams,
   Member,
   StatsSummary,
   Task,
   UpdateTaskBody,
+  VelocityReport,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -777,6 +779,100 @@ export function useGetUpcomingTasks<
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetUpcomingTasksQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Weekly completion velocity
+ */
+export const getGetVelocityUrl = (params?: GetVelocityParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/stats/velocity?${stringifiedParams}`
+    : `/api/stats/velocity`;
+};
+
+export const getVelocity = async (
+  params?: GetVelocityParams,
+  options?: RequestInit,
+): Promise<VelocityReport> => {
+  return customFetch<VelocityReport>(getGetVelocityUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetVelocityQueryKey = (params?: GetVelocityParams) => {
+  return [`/api/stats/velocity`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetVelocityQueryOptions = <
+  TData = Awaited<ReturnType<typeof getVelocity>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetVelocityParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getVelocity>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetVelocityQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getVelocity>>> = ({
+    signal,
+  }) => getVelocity(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getVelocity>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetVelocityQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getVelocity>>
+>;
+export type GetVelocityQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Weekly completion velocity
+ */
+
+export function useGetVelocity<
+  TData = Awaited<ReturnType<typeof getVelocity>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetVelocityParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getVelocity>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetVelocityQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
