@@ -23,8 +23,50 @@ export const ListMembersResponseItem = zod.object({
   email: zod.string(),
   avatarColor: zod.string().describe("Tailwind-friendly color hint for avatar"),
   role: zod.string(),
+  createdAt: zod.coerce.date(),
 });
 export const ListMembersResponse = zod.array(ListMembersResponseItem);
+
+/**
+ * @summary Create a team member
+ */
+
+export const CreateMemberBody = zod.object({
+  name: zod.string().min(1),
+  email: zod.string().email(),
+  avatarColor: zod.string().optional(),
+  role: zod.string().min(1),
+});
+
+/**
+ * @summary Update a team member
+ */
+export const UpdateMemberParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateMemberBody = zod.object({
+  name: zod.string().min(1).optional(),
+  email: zod.string().email().optional(),
+  avatarColor: zod.string().optional(),
+  role: zod.string().min(1).optional(),
+});
+
+export const UpdateMemberResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  email: zod.string(),
+  avatarColor: zod.string().describe("Tailwind-friendly color hint for avatar"),
+  role: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a team member
+ */
+export const DeleteMemberParams = zod.object({
+  id: zod.coerce.string(),
+});
 
 /**
  * @summary List tasks
@@ -51,6 +93,7 @@ export const ListTasksResponseItem = zod.object({
         .string()
         .describe("Tailwind-friendly color hint for avatar"),
       role: zod.string(),
+      createdAt: zod.coerce.date(),
     })
     .nullish(),
   tags: zod.array(zod.string()),
@@ -97,6 +140,7 @@ export const GetTaskResponse = zod.object({
         .string()
         .describe("Tailwind-friendly color hint for avatar"),
       role: zod.string(),
+      createdAt: zod.coerce.date(),
     })
     .nullish(),
   tags: zod.array(zod.string()),
@@ -138,6 +182,7 @@ export const UpdateTaskResponse = zod.object({
         .string()
         .describe("Tailwind-friendly color hint for avatar"),
       role: zod.string(),
+      createdAt: zod.coerce.date(),
     })
     .nullish(),
   tags: zod.array(zod.string()),
@@ -206,6 +251,7 @@ export const GetUpcomingTasksResponseItem = zod.object({
         .string()
         .describe("Tailwind-friendly color hint for avatar"),
       role: zod.string(),
+      createdAt: zod.coerce.date(),
     })
     .nullish(),
   tags: zod.array(zod.string()),
@@ -260,6 +306,7 @@ export const GetWorkloadResponseItem = zod.object({
       .string()
       .describe("Tailwind-friendly color hint for avatar"),
     role: zod.string(),
+    createdAt: zod.coerce.date(),
   }),
   total: zod.number(),
   todo: zod.number(),

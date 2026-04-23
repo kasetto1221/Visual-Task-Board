@@ -6,12 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface Member {
-  id: string;
+export interface CreateMemberBody {
+  /** @minLength 1 */
   name: string;
   email: string;
-  /** Tailwind-friendly color hint for avatar */
-  avatarColor: string;
+  avatarColor?: string;
+  /** @minLength 1 */
   role: string;
-  createdAt: Date;
 }

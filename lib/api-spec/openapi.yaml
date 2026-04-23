@@ -43,6 +43,60 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Member"
+    post:
+      operationId: createMember
+      tags: [members]
+      summary: Create a team member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMemberBody"
+      responses:
+        "201":
+          description: Created member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+  /members/{id}:
+    patch:
+      operationId: updateMember
+      tags: [members]
+      summary: Update a team member
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMemberBody"
+      responses:
+        "200":
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+    delete:
+      operationId: deleteMember
+      tags: [members]
+      summary: Delete a team member
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
   /tasks:
     get:
       operationId: listTasks
@@ -233,7 +287,39 @@ components:
           description: Tailwind-friendly color hint for avatar
         role:
           type: string
-      required: [id, name, email, avatarColor, role]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, email, avatarColor, role, createdAt]
+    CreateMemberBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        avatarColor:
+          type: string
+        role:
+          type: string
+          minLength: 1
+      required: [name, email, role]
+    UpdateMemberBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        avatarColor:
+          type: string
+        role:
+          type: string
+          minLength: 1
     Task:
       type: object
       properties:

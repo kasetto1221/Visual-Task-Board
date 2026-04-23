@@ -34,6 +34,25 @@ export interface Member {
   /** Tailwind-friendly color hint for avatar */
   avatarColor: string;
   role: string;
+  createdAt: string;
+}
+
+export interface CreateMemberBody {
+  /** @minLength 1 */
+  name: string;
+  email: string;
+  avatarColor?: string;
+  /** @minLength 1 */
+  role: string;
+}
+
+export interface UpdateMemberBody {
+  /** @minLength 1 */
+  name?: string;
+  email?: string;
+  avatarColor?: string;
+  /** @minLength 1 */
+  role?: string;
 }
 
 export interface Task {

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Users, CalendarClock, Plus, CheckCircle2, Clock, AlertCircle, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, CalendarClock, CheckCircle2, Clock, AlertCircle, BarChart3, UserCog } from "lucide-react";
 import { useGetStatsSummary } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ function Sidebar({ location }: { location: string }) {
     { href: "/dashboard", label: "ダッシュボード", icon: BarChart3 },
     { href: "/team", label: "チーム負荷", icon: Users },
     { href: "/upcoming", label: "今後のタスク", icon: CalendarClock },
+    { href: "/members", label: "ユーザー管理", icon: UserCog },
   ];
 
   return (

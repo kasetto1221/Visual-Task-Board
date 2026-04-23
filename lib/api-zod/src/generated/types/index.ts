@@ -7,6 +7,7 @@
  */
 
 export * from "./assigneeWorkload";
+export * from "./createMemberBody";
 export * from "./createTaskBody";
 export * from "./getUpcomingTasksParams";
 export * from "./getVelocityParams";
@@ -19,6 +20,7 @@ export * from "./statusCount";
 export * from "./task";
 export * from "./taskPriority";
 export * from "./taskStatus";
+export * from "./updateMemberBody";
 export * from "./updateTaskBody";
 export * from "./velocityReport";
 export * from "./weekVelocityPoint";

@@ -18,6 +18,7 @@ import type {
 
 import type {
   AssigneeWorkload,
+  CreateMemberBody,
   CreateTaskBody,
   GetUpcomingTasksParams,
   GetVelocityParams,
@@ -26,6 +27,7 @@ import type {
   Member,
   StatsSummary,
   Task,
+  UpdateMemberBody,
   UpdateTaskBody,
   VelocityReport,
 } from "./api.schemas";
@@ -186,6 +188,263 @@ export function useListMembers<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Create a team member
+ */
+export const getCreateMemberUrl = () => {
+  return `/api/members`;
+};
+
+export const createMember = async (
+  createMemberBody: CreateMemberBody,
+  options?: RequestInit,
+): Promise<Member> => {
+  return customFetch<Member>(getCreateMemberUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createMemberBody),
+  });
+};
+
+export const getCreateMemberMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createMember>>,
+    TError,
+    { data: BodyType<CreateMemberBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createMember>>,
+  TError,
+  { data: BodyType<CreateMemberBody> },
+  TContext
+> => {
+  const mutationKey = ["createMember"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createMember>>,
+    { data: BodyType<CreateMemberBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createMember(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateMemberMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createMember>>
+>;
+export type CreateMemberMutationBody = BodyType<CreateMemberBody>;
+export type CreateMemberMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a team member
+ */
+export const useCreateMember = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createMember>>,
+    TError,
+    { data: BodyType<CreateMemberBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createMember>>,
+  TError,
+  { data: BodyType<CreateMemberBody> },
+  TContext
+> => {
+  return useMutation(getCreateMemberMutationOptions(options));
+};
+
+/**
+ * @summary Update a team member
+ */
+export const getUpdateMemberUrl = (id: string) => {
+  return `/api/members/${id}`;
+};
+
+export const updateMember = async (
+  id: string,
+  updateMemberBody: UpdateMemberBody,
+  options?: RequestInit,
+): Promise<Member> => {
+  return customFetch<Member>(getUpdateMemberUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateMemberBody),
+  });
+};
+
+export const getUpdateMemberMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMember>>,
+    TError,
+    { id: string; data: BodyType<UpdateMemberBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMember>>,
+  TError,
+  { id: string; data: BodyType<UpdateMemberBody> },
+  TContext
+> => {
+  const mutationKey = ["updateMember"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMember>>,
+    { id: string; data: BodyType<UpdateMemberBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateMember(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMemberMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateMember>>
+>;
+export type UpdateMemberMutationBody = BodyType<UpdateMemberBody>;
+export type UpdateMemberMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a team member
+ */
+export const useUpdateMember = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMember>>,
+    TError,
+    { id: string; data: BodyType<UpdateMemberBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateMember>>,
+  TError,
+  { id: string; data: BodyType<UpdateMemberBody> },
+  TContext
+> => {
+  return useMutation(getUpdateMemberMutationOptions(options));
+};
+
+/**
+ * @summary Delete a team member
+ */
+export const getDeleteMemberUrl = (id: string) => {
+  return `/api/members/${id}`;
+};
+
+export const deleteMember = async (
+  id: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteMemberUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteMemberMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMember>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteMember>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteMember"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteMember>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteMember(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteMemberMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteMember>>
+>;
+
+export type DeleteMemberMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a team member
+ */
+export const useDeleteMember = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMember>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteMember>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteMemberMutationOptions(options));
+};
 
 /**
  * @summary List tasks
