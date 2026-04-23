@@ -3,20 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Task Board API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: tasks
+    description: Task operations
+  - name: members
+    description: Team member operations
+  - name: stats
+    description: Aggregated statistics
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +29,162 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /members:
+    get:
+      operationId: listMembers
+      tags: [members]
+      summary: List team members
+      responses:
+        "200":
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List tasks
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/TaskStatus"
+        - in: query
+          name: assigneeId
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskBody"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get a task by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update a task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskBody"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Delete a task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+  /stats/summary:
+    get:
+      operationId: getStatsSummary
+      tags: [stats]
+      summary: Aggregated task summary
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsSummary"
+  /stats/upcoming:
+    get:
+      operationId: getUpcomingTasks
+      tags: [stats]
+      summary: Upcoming tasks ordered by due date
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        "200":
+          description: Upcoming tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+  /stats/workload:
+    get:
+      operationId: getWorkload
+      tags: [stats]
+      summary: Per-assignee workload counts
+      responses:
+        "200":
+          description: Workload by assignee
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssigneeWorkload"
 components:
   schemas:
     HealthStatus:
@@ -31,6 +192,166 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
-
+      required: [status]
+    TaskStatus:
+      type: string
+      enum: [todo, in_progress, in_review, done]
+    TaskPriority:
+      type: string
+      enum: [low, medium, high, urgent]
+    Member:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        avatarColor:
+          type: string
+          description: Tailwind-friendly color hint for avatar
+        role:
+          type: string
+      required: [id, name, email, avatarColor, role]
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        priority:
+          $ref: "#/components/schemas/TaskPriority"
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        assigneeId:
+          type: string
+          nullable: true
+        assignee:
+          allOf:
+            - $ref: "#/components/schemas/Member"
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, title, status, priority, tags, createdAt, updatedAt]
+    CreateTaskBody:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        priority:
+          $ref: "#/components/schemas/TaskPriority"
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        assigneeId:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+      required: [title]
+    UpdateTaskBody:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        priority:
+          $ref: "#/components/schemas/TaskPriority"
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        assigneeId:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+    StatusCount:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        count:
+          type: integer
+      required: [status, count]
+    PriorityCount:
+      type: object
+      properties:
+        priority:
+          $ref: "#/components/schemas/TaskPriority"
+        count:
+          type: integer
+      required: [priority, count]
+    StatsSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+        overdue:
+          type: integer
+        dueToday:
+          type: integer
+        dueThisWeek:
+          type: integer
+        completedThisWeek:
+          type: integer
+        byStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusCount"
+        byPriority:
+          type: array
+          items:
+            $ref: "#/components/schemas/PriorityCount"
+      required: [total, overdue, dueToday, dueThisWeek, completedThisWeek, byStatus, byPriority]
+    AssigneeWorkload:
+      type: object
+      properties:
+        member:
+          $ref: "#/components/schemas/Member"
+        total:
+          type: integer
+        todo:
+          type: integer
+        inProgress:
+          type: integer
+        inReview:
+          type: integer
+        done:
+          type: integer
+        overdue:
+          type: integer
+      required: [member, total, todo, inProgress, inReview, done, overdue]
