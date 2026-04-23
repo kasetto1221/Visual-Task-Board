@@ -12,9 +12,13 @@ import { motion } from "framer-motion";
 interface TaskCardProps {
   task: Task;
   onClick: (task: Task) => void;
+  draggable?: boolean;
+  onDragStart?: (task: Task) => void;
+  onDragEnd?: () => void;
+  isDragging?: boolean;
 }
 
-export function TaskCard({ task, onClick }: TaskCardProps) {
+export function TaskCard({ task, onClick, draggable, onDragStart, onDragEnd, isDragging }: TaskCardProps) {
   const dueDate = task.dueDate ? new Date(task.dueDate) : null;
   const isOverdue = dueDate && isPast(dueDate) && !isToday(dueDate) && task.status !== 'done';
   
@@ -22,10 +26,17 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
     <motion.div
       layout
       initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: isDragging ? 0.4 : 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -2 }}
       className="mb-3"
+      draggable={draggable}
+      onDragStart={(e) => {
+        if (!draggable) return;
+        (e as unknown as DragEvent).dataTransfer?.setData("text/plain", task.id);
+        onDragStart?.(task);
+      }}
+      onDragEnd={() => onDragEnd?.()}
     >
       <Card 
         className={cn(
