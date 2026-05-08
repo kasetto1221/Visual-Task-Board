@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db, tasksTable, membersTable } from "@workspace/db";
 import { schemas } from "@workspace/api-zod";
+import { cacheDeleteStats } from "../lib/cache";
 
 const router: IRouter = Router();
 
@@ -49,8 +50,7 @@ router.get("/tasks", async (req, res, next) => {
       serializeTask(r, r.assigneeId ? memberMap.get(r.assigneeId) ?? null : null),
     );
     if (params.status) result = result.filter((t) => t.status === params.status);
-    if (params.assigneeId)
-      result = result.filter((t) => t.assigneeId === params.assigneeId);
+    if (params.assigneeId) result = result.filter((t) => t.assigneeId === params.assigneeId);
     res.json(result);
   } catch (err) {
     next(err);
@@ -72,6 +72,7 @@ router.post("/tasks", async (req, res, next) => {
       tags: body.tags ?? [],
     });
     const result = await loadTaskWithAssignee(id);
+    await cacheDeleteStats();
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -112,6 +113,7 @@ router.patch("/tasks/:id", async (req, res, next) => {
       res.status(404).json({ error: "not_found" });
       return;
     }
+    await cacheDeleteStats();
     res.json(result);
   } catch (err) {
     next(err);
@@ -121,6 +123,7 @@ router.patch("/tasks/:id", async (req, res, next) => {
 router.delete("/tasks/:id", async (req, res, next) => {
   try {
     await db.delete(tasksTable).where(eq(tasksTable.id, req.params.id));
+    await cacheDeleteStats();
     res.status(204).end();
   } catch (err) {
     next(err);

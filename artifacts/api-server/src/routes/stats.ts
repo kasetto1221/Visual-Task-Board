@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, tasksTable, membersTable } from "@workspace/db";
+import { cacheGet, cacheSet, STATS_CACHE_KEYS, TTL } from "../lib/cache";
 
 const router: IRouter = Router();
 
@@ -26,6 +27,14 @@ function fmt(d: Date): string {
 
 router.get("/stats/summary", async (_req, res, next) => {
   try {
+    const cacheKey = STATS_CACHE_KEYS.summary;
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      res.setHeader("X-Cache", "HIT");
+      res.json(cached);
+      return;
+    }
+
     const tasks = await db.select().from(tasksTable);
     const today = todayStr();
     const now = new Date();
@@ -36,8 +45,7 @@ router.get("/stats/summary", async (_req, res, next) => {
     const overdue = tasks.filter(
       (t) => t.dueDate && t.dueDate < today && t.status !== "done",
     ).length;
-    const dueToday = tasks.filter((t) => t.dueDate === today && t.status !== "done")
-      .length;
+    const dueToday = tasks.filter((t) => t.dueDate === today && t.status !== "done").length;
     const dueThisWeek = tasks.filter(
       (t) =>
         t.dueDate &&
@@ -60,15 +68,10 @@ router.get("/stats/summary", async (_req, res, next) => {
       count: tasks.filter((t) => t.priority === p).length,
     }));
 
-    res.json({
-      total,
-      overdue,
-      dueToday,
-      dueThisWeek,
-      completedThisWeek,
-      byStatus,
-      byPriority,
-    });
+    const result = { total, overdue, dueToday, dueThisWeek, completedThisWeek, byStatus, byPriority };
+    await cacheSet(cacheKey, result, TTL.short);
+    res.setHeader("X-Cache", "MISS");
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -78,6 +81,15 @@ router.get("/stats/upcoming", async (req, res, next) => {
   try {
     const limitRaw = Number(req.query.limit ?? 10);
     const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(1, limitRaw), 50) : 10;
+
+    const cacheKey = STATS_CACHE_KEYS.upcoming(limit);
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      res.setHeader("X-Cache", "HIT");
+      res.json(cached);
+      return;
+    }
+
     const today = todayStr();
     const tasks = await db.select().from(tasksTable);
     const members = await db.select().from(membersTable);
@@ -101,6 +113,8 @@ router.get("/stats/upcoming", async (req, res, next) => {
         updatedAt: t.updatedAt.toISOString(),
       }));
 
+    await cacheSet(cacheKey, upcoming, TTL.short);
+    res.setHeader("X-Cache", "MISS");
     res.json(upcoming);
   } catch (err) {
     next(err);
@@ -113,6 +127,15 @@ router.get("/stats/velocity", async (req, res, next) => {
     const weeks = Number.isFinite(weeksRaw)
       ? Math.min(Math.max(1, Math.trunc(weeksRaw)), 26)
       : 8;
+
+    const cacheKey = STATS_CACHE_KEYS.velocity(weeks);
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      res.setHeader("X-Cache", "HIT");
+      res.json(cached);
+      return;
+    }
+
     const tasks = await db.select().from(tasksTable);
 
     const now = new Date();
@@ -137,14 +160,7 @@ router.get("/stats/velocity", async (req, res, next) => {
       end.setDate(end.getDate() + 7);
       const month = start.getMonth() + 1;
       const date = start.getDate();
-      buckets.push({
-        weekStart: fmt(start),
-        label: `${month}/${date}`,
-        completed: 0,
-        created: 0,
-        start,
-        end,
-      });
+      buckets.push({ weekStart: fmt(start), label: `${month}/${date}`, completed: 0, created: 0, start, end });
     }
 
     let totalCycleDays = 0;
@@ -153,51 +169,38 @@ router.get("/stats/velocity", async (req, res, next) => {
     for (const t of tasks) {
       const created = t.createdAt;
       for (const b of buckets) {
-        if (created >= b.start && created < b.end) {
-          b.created += 1;
-          break;
-        }
+        if (created >= b.start && created < b.end) { b.created += 1; break; }
       }
       if (t.status === "done") {
         const completedAt = t.updatedAt;
         for (const b of buckets) {
-          if (completedAt >= b.start && completedAt < b.end) {
-            b.completed += 1;
-            break;
-          }
+          if (completedAt >= b.start && completedAt < b.end) { b.completed += 1; break; }
         }
         const ms = completedAt.getTime() - created.getTime();
-        if (ms >= 0) {
-          totalCycleDays += ms / (1000 * 60 * 60 * 24);
-          cycleCount += 1;
-        }
+        if (ms >= 0) { totalCycleDays += ms / (1000 * 60 * 60 * 24); cycleCount += 1; }
       }
     }
 
     const totalCompleted = buckets.reduce((s, b) => s + b.completed, 0);
     const totalCreated = buckets.reduce((s, b) => s + b.created, 0);
-    const averageCompletedPerWeek =
-      buckets.length > 0
-        ? Math.round((totalCompleted / buckets.length) * 10) / 10
-        : 0;
-    const completionRate =
-      totalCreated > 0 ? Math.round((totalCompleted / totalCreated) * 100) / 100 : 0;
-    const averageCycleTimeDays =
-      cycleCount > 0 ? Math.round((totalCycleDays / cycleCount) * 10) / 10 : 0;
+    const averageCompletedPerWeek = buckets.length > 0
+      ? Math.round((totalCompleted / buckets.length) * 10) / 10 : 0;
+    const completionRate = totalCreated > 0
+      ? Math.round((totalCompleted / totalCreated) * 100) / 100 : 0;
+    const averageCycleTimeDays = cycleCount > 0
+      ? Math.round((totalCycleDays / cycleCount) * 10) / 10 : 0;
 
-    res.json({
-      weeks: buckets.map(({ weekStart, label, completed, created }) => ({
-        weekStart,
-        label,
-        completed,
-        created,
-      })),
+    const result = {
+      weeks: buckets.map(({ weekStart, label, completed, created }) => ({ weekStart, label, completed, created })),
       averageCompletedPerWeek,
       totalCompleted,
       totalCreated,
       completionRate,
       averageCycleTimeDays,
-    });
+    };
+    await cacheSet(cacheKey, result, TTL.medium);
+    res.setHeader("X-Cache", "MISS");
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -205,6 +208,14 @@ router.get("/stats/velocity", async (req, res, next) => {
 
 router.get("/stats/workload", async (_req, res, next) => {
   try {
+    const cacheKey = STATS_CACHE_KEYS.workload;
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      res.setHeader("X-Cache", "HIT");
+      res.json(cached);
+      return;
+    }
+
     const tasks = await db.select().from(tasksTable);
     const members = await db.select().from(membersTable);
     const today = todayStr();
@@ -218,12 +229,12 @@ router.get("/stats/workload", async (_req, res, next) => {
         inProgress: own.filter((t) => t.status === "in_progress").length,
         inReview: own.filter((t) => t.status === "in_review").length,
         done: own.filter((t) => t.status === "done").length,
-        overdue: own.filter(
-          (t) => t.dueDate && t.dueDate < today && t.status !== "done",
-        ).length,
+        overdue: own.filter((t) => t.dueDate && t.dueDate < today && t.status !== "done").length,
       };
     });
 
+    await cacheSet(cacheKey, result, TTL.short);
+    res.setHeader("X-Cache", "MISS");
     res.json(result);
   } catch (err) {
     next(err);

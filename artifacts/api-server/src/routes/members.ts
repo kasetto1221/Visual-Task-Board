@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, membersTable } from "@workspace/db";
 import { schemas } from "@workspace/api-zod";
 import { randomUUID } from "crypto";
+import { cacheDeleteStats } from "../lib/cache";
 
 const AVATAR_COLORS = [
   "#4f46e5", "#0891b2", "#059669", "#d97706",
@@ -37,6 +38,7 @@ router.post("/members", async (req, res, next) => {
       avatarColor: color,
       role,
     }).returning();
+    await cacheDeleteStats();
     res.status(201).json(row);
   } catch (err) {
     next(err);
@@ -64,6 +66,7 @@ router.patch("/members/:id", async (req, res, next) => {
       res.status(404).json({ error: "Member not found" });
       return;
     }
+    await cacheDeleteStats();
     res.json(row);
   } catch (err) {
     next(err);
@@ -79,6 +82,7 @@ router.delete("/members/:id", async (req, res, next) => {
       res.status(404).json({ error: "Member not found" });
       return;
     }
+    await cacheDeleteStats();
     res.status(204).send();
   } catch (err) {
     next(err);
