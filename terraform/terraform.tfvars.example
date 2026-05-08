@@ -1,0 +1,28 @@
+# Copy this file to terraform.tfvars and fill in the values.
+# Never commit terraform.tfvars to version control.
+
+app_name    = "visual-task-board"
+environment = "production"
+aws_region  = "ap-northeast-1"
+
+# Docker image pushed to ECR
+api_image = "123456789.dkr.ecr.ap-northeast-1.amazonaws.com/visual-task-board-api:latest"
+
+# ECS tuning
+api_desired_count    = 2
+api_min_capacity     = 2
+api_max_capacity     = 10
+api_cpu              = 512
+api_memory           = 1024
+api_cpu_scale_target = 70
+
+# RDS
+db_instance_class        = "db.t3.micro"
+db_name                  = "taskboard"
+db_username              = "taskboard_admin"
+db_password              = "change-me-to-a-strong-password-16chars"
+db_multi_az              = false
+db_backup_retention_days = 7
+
+# HTTPS (optional — leave empty to use HTTP only)
+# certificate_arn = "arn:aws:acm:ap-northeast-1:123456789:certificate/xxxx"
