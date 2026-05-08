@@ -34,7 +34,7 @@ variable "public_subnet_cidrs" {
 }
 
 variable "private_subnet_cidrs" {
-  description = "CIDR blocks for the two private subnets (ECS / RDS)"
+  description = "CIDR blocks for the two private subnets (ECS / DocumentDB)"
   type        = list(string)
   default     = ["10.0.11.0/24", "10.0.12.0/24"]
 }
@@ -81,44 +81,38 @@ variable "api_cpu_scale_target" {
   default     = 70
 }
 
-# ---- RDS ----
-variable "db_instance_class" {
-  description = "RDS instance class"
+# ---- DocumentDB ----
+variable "documentdb_instance_class" {
+  description = "DocumentDB instance class (t3.micro is not supported; minimum is db.t3.medium)"
   type        = string
-  default     = "db.t3.micro"
+  default     = "db.t3.medium"
 }
 
-variable "db_name" {
-  description = "PostgreSQL database name"
-  type        = string
-  default     = "taskboard"
+variable "documentdb_instance_count" {
+  description = "Number of DocumentDB cluster instances"
+  type        = number
+  default     = 1
 }
 
-variable "db_username" {
-  description = "RDS master username"
+variable "documentdb_username" {
+  description = "DocumentDB master username"
   type        = string
   default     = "taskboard_admin"
   sensitive   = true
 }
 
-variable "db_password" {
-  description = "RDS master password (min 16 chars). Use TF_VAR_db_password env var."
+variable "documentdb_password" {
+  description = "DocumentDB master password (min 16 chars). Use TF_VAR_documentdb_password env var."
   type        = string
   sensitive   = true
   validation {
-    condition     = length(var.db_password) >= 16
-    error_message = "db_password must be at least 16 characters."
+    condition     = length(var.documentdb_password) >= 16
+    error_message = "documentdb_password must be at least 16 characters."
   }
 }
 
-variable "db_multi_az" {
-  description = "Enable Multi-AZ for RDS (recommended for production)"
-  type        = bool
-  default     = false
-}
-
-variable "db_backup_retention_days" {
-  description = "Number of days to retain automated RDS backups"
+variable "documentdb_backup_retention_days" {
+  description = "Number of days to retain automated DocumentDB backups"
   type        = number
   default     = 7
 }

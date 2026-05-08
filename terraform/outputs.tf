@@ -23,14 +23,14 @@ output "frontend_bucket_name" {
   value       = aws_s3_bucket.frontend.bucket
 }
 
-output "rds_endpoint" {
-  description = "RDS PostgreSQL endpoint (accessible from ECS tasks only)"
-  value       = aws_db_instance.main.address
+output "documentdb_endpoint" {
+  description = "DocumentDB cluster endpoint (accessible from ECS tasks only)"
+  value       = aws_docdb_cluster.main.endpoint
 }
 
-output "db_secret_arn" {
-  description = "Secrets Manager ARN containing DATABASE_URL"
-  value       = aws_secretsmanager_secret.db.arn
+output "documentdb_secret_arn" {
+  description = "Secrets Manager ARN containing MONGODB_URI"
+  value       = aws_secretsmanager_secret.documentdb.arn
 }
 
 output "ecs_cluster_name" {

@@ -29,7 +29,7 @@ resource "aws_iam_role_policy" "ecs_secrets_access" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["secretsmanager:GetSecretValue"]
-      Resource = aws_secretsmanager_secret.db.arn
+      Resource = aws_secretsmanager_secret.documentdb.arn
     }]
   })
 }

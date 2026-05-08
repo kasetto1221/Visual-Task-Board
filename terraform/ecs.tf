@@ -40,8 +40,8 @@ resource "aws_ecs_task_definition" "api" {
     }]
 
     secrets = [{
-      name      = "DATABASE_URL"
-      valueFrom = "${aws_secretsmanager_secret.db.arn}:DATABASE_URL::"
+      name      = "MONGODB_URI"
+      valueFrom = "${aws_secretsmanager_secret.documentdb.arn}:MONGODB_URI::"
     }]
 
     environment = [

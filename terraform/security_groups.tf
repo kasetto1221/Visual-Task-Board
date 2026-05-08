@@ -50,25 +50,25 @@ resource "aws_security_group" "ecs" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "All outbound (ECR pull, Secrets Manager, RDS)"
+    description = "All outbound (ECR pull, Secrets Manager, DocumentDB)"
   }
 
   tags = { Name = "${var.app_name}-ecs-sg" }
 }
 
-# ---- RDS Security Group ----
-resource "aws_security_group" "rds" {
-  name        = "${var.app_name}-rds-sg"
-  description = "Allow PostgreSQL only from ECS tasks"
+# ---- DocumentDB Security Group ----
+resource "aws_security_group" "documentdb" {
+  name        = "${var.app_name}-documentdb-sg"
+  description = "Allow DocumentDB only from ECS tasks"
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    from_port       = 5432
-    to_port         = 5432
+    from_port       = 27017
+    to_port         = 27017
     protocol        = "tcp"
     security_groups = [aws_security_group.ecs.id]
-    description     = "PostgreSQL from ECS"
+    description     = "DocumentDB from ECS"
   }
 
-  tags = { Name = "${var.app_name}-rds-sg" }
+  tags = { Name = "${var.app_name}-documentdb-sg" }
 }
