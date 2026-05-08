@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "aqWjymXKBZLtn6EpZvcJc"
+uri = "file://docs/functional-requirements.md"
+type = "text"
+title = "機能要件定義書 - Visual Task Board"
