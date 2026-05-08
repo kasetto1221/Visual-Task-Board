@@ -64,9 +64,15 @@ export async function cacheSet(key: string, value: unknown, ttlSeconds: number):
 export async function cacheDeleteStats(): Promise<void> {
   if (!client) return;
   try {
-    const keys = await client.keys("stats:*");
-    if (keys.length > 0) {
-      await client.del(...keys);
+    const allKeys: string[] = [];
+    let cursor = "0";
+    do {
+      const [nextCursor, keys] = await client.scan(cursor, "MATCH", "stats:*", "COUNT", 100);
+      cursor = nextCursor;
+      allKeys.push(...keys);
+    } while (cursor !== "0");
+    if (allKeys.length > 0) {
+      await client.del(...allKeys);
     }
   } catch {
     // silent
