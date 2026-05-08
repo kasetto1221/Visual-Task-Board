@@ -6,3 +6,9 @@ id = "aqWjymXKBZLtn6EpZvcJc"
 uri = "file://docs/functional-requirements.md"
 type = "text"
 title = "機能要件定義書 - Visual Task Board"
+
+[[outputs]]
+id = "q_GFuhVPLR4NBMAZsvLgW"
+uri = "file://docs/cloudformation.yaml"
+type = "unspecified"
+title = "CloudFormation テンプレート - Visual Task Board"
